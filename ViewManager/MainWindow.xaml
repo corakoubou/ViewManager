@@ -1,0 +1,135 @@
+﻿<Window x:Class="PureRefBoardWpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PureRefBoardWpf (v14-like)"
+        Width="1300" Height="820"
+        Background="#0f1217"
+        KeyDown="Window_KeyDown"
+        KeyUp="Window_KeyUp"
+        AllowDrop="True"
+        Drop="Window_Drop"
+        DragOver="Window_DragOver">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Topbar -->
+        <Border Grid.Row="0" Margin="10" Padding="10" CornerRadius="14"
+            Background="#DD181C24" BorderBrush="#22FFFFFF" BorderThickness="1">
+            <Border.LayoutTransform>
+                <ScaleTransform x:Name="UiScaleTf" ScaleX="1" ScaleY="1"/>
+            </Border.LayoutTransform>
+
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Height="34">
+                        <StackPanel x:Name="TabsPanel" Orientation="Horizontal"/>
+                    </ScrollViewer>
+
+                    <Button Content="＋" Margin="8,0,0,0" Padding="10,6" Click="AddTab_Click"/>
+                    <Button Content="複製" Margin="6,0,0,0" Padding="10,6" Click="DupTab_Click"/>
+                    <Button Content="削除" Margin="6,0,0,0" Padding="10,6" Click="DelTab_Click"/>
+                </StackPanel>
+
+                <Border DockPanel.Dock="Left" CornerRadius="999" BorderThickness="1" BorderBrush="#22FFFFFF"
+                Background="#11FFFFFF" Padding="10,6" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="MbChip" Foreground="#9aa6b2" FontSize="12" Text="このタブ: 0.0MB / 全体: 0.0MB"/>
+                </Border>
+
+                <TextBlock x:Name="StatusText" Foreground="#9aa6b2" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" Text="Ready"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Viewport -->
+        <Border Grid.Row="1" Margin="10" CornerRadius="16" Background="#0b0d12"
+            BorderBrush="#223044" BorderThickness="1" ClipToBounds="True">
+            <Grid>
+                <!-- simple bg grid -->
+                <Canvas>
+                    <Rectangle Width="6000" Height="4000">
+                        <Rectangle.Fill>
+                            <DrawingBrush TileMode="Tile" Viewport="0,0,70,70" ViewportUnits="Absolute"
+                            Viewbox="0,0,70,70" ViewboxUnits="Absolute">
+                                <DrawingBrush.Drawing>
+                                    <GeometryDrawing Brush="Transparent" Pen="#223044,1">
+                                        <GeometryDrawing.Geometry>
+                                            <RectangleGeometry Rect="0,0,70,70"/>
+                                        </GeometryDrawing.Geometry>
+                                    </GeometryDrawing>
+                                </DrawingBrush.Drawing>
+                            </DrawingBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                </Canvas>
+
+                <Canvas x:Name="World"
+                Background="Transparent"
+                Focusable="True"
+                MouseWheel="World_MouseWheel"
+                MouseDown="World_MouseDown"
+                MouseMove="World_MouseMove"
+                MouseUp="World_MouseUp">
+                    <Canvas.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="CamScale" ScaleX="1" ScaleY="1"/>
+                            <TranslateTransform x:Name="CamTranslate" X="0" Y="0"/>
+                        </TransformGroup>
+                    </Canvas.RenderTransform>
+
+                    <Canvas.ContextMenu>
+                        <ContextMenu x:Name="CtxMenu" Opened="CtxMenu_Opened">
+                            <MenuItem Header="画像追加（ファイル）" Click="Ctx_Add_Click"/>
+                            <Separator/>
+
+                            <MenuItem Header="画像をコピー（選択中 / Ctrl+C）" Click="Ctx_Copy_Click"/>
+                            <Separator/>
+
+                            <MenuItem Header="ロック切替（選択中）" Click="Ctx_Lock_Click"/>
+                            <MenuItem Header="最前面へ（F）" Click="Ctx_Front_Click"/>
+                            <Separator/>
+
+                            <MenuItem Header="左右反転（選択中）" Click="Ctx_FlipH_Click"/>
+                            <MenuItem Header="上下反転（選択中）" Click="Ctx_FlipV_Click"/>
+                            <Separator/>
+
+                            <MenuItem Header="中央へ" Click="Ctx_Center_Click"/>
+                            <MenuItem Header="表示リセット" Click="Ctx_ResetView_Click"/>
+                            <Separator/>
+
+                            <MenuItem Header="保存先フォルダを選ぶ" Click="Ctx_PickFolder_Click"/>
+                            <MenuItem Header="今すぐ保存（フォルダへ）" Click="Ctx_SaveNow_Click"/>
+                            <MenuItem x:Name="AutoSaveMenuItem" Header="自動保存：OFF" Click="Ctx_ToggleAutoSave_Click"/>
+                            <Separator/>
+
+                            <MenuItem Header="エクスポート（名前指定保存）" Click="Ctx_ExportAs_Click"/>
+                            <MenuItem Header="インポート（全タブ）" Click="Ctx_Import_Click"/>
+                            <Separator/>
+
+                            <MenuItem Header="操作説明" Click="Ctx_Help_Click"/>
+                            <Separator/>
+
+                            <MenuItem Header="UIサイズ">
+                                <MenuItem.StaysOpenOnClick>true</MenuItem.StaysOpenOnClick>
+                                <Slider x:Name="UiScaleSlider" Minimum="0.6" Maximum="1.2" ValueChanged="UiScaleSlider_ValueChanged" Width="160" Margin="10,6"/>
+                            </MenuItem>
+                            <Separator/>
+
+                            <MenuItem Header="このタブを全消去" Foreground="#ffd3d8" Click="Ctx_ClearTab_Click"/>
+                        </ContextMenu>
+                    </Canvas.ContextMenu>
+                </Canvas>
+
+                <!-- Drop overlay -->
+                <Border x:Name="DropOverlay" Visibility="Collapsed"
+                Background="#194AA3FF" BorderBrush="#A04AA3FF" BorderThickness="2"
+                CornerRadius="12" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Foreground="#e8eef7" FontSize="18" Text="ここにドロップっす（画像=追加 / JSON=インポート）"/>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
